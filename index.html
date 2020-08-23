@@ -1,15 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Shubham Arora</title>
+    <title>Manan Monga's homepage</title>
+
+    <style>
+        html, body {
+            height: 100%;
+        }
+        body {
+            font-family: sans-serif;
+            width: 100%;
+            margin: 0px;
+        }
+
+        .base {
+            display: flex;
+            flex-direction: row;
+            height: 100%;
+        }
+
+        .nav-bar {
+            flex: 1;
+            /* margin: auto; */
+            background-color: #202020;
+            color: white;
+            text-align: center;
+            height: 100%;
+        }
+        a:link {
+              text-decoration: none;
+              color: inherit;
+            }
+        a:visited {
+            text-decoration: none;
+            color: inherit  
+            }
+
+        a:hover {
+            text-decoration: underline;
+            }
+
+        a:active {
+            text-decoration: underline;
+            }
+
+        .content {
+            flex: 3;
+            margin: 10px;
+            /* padding: 10px; */
+            height: 100%;
+        }
+
+        .hello {
+            max-width: 800px;
+        }
+    </style>
 </head>
+
 <body>
-    <div id="intro">
-    Hello! <br>
-    I am an MS student in Computer Science at the Boston University College of Arts and Sciences. I have an avid interest in CyberSecurity
-    
+
+    <div class="base">
+        <div class="nav-bar">
+            <div class="image"><img src="assets/avatar.jpeg" alt="avatar" width="200px" ></div>
+            <div class="logo">Manan Monga</div>
+            <div class="subtext">Computer Science and Cybersecurity Graduate Student</div>
+            <div class="links">
+                <ul>
+                    <li>Home</li>
+                    <li><a href = "mailto: mananmonga@gmail.com">Email</li>
+                    <li> <a href = "https://github.com/mananmonga">    Github</li> </a>
+                    <li> <a href = "https://www.linkedin.com/in/manan-monga-844207147/"> LinkedIn</li></a>
+                    <li>Posts</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <p class="hello">
+                Hello! <br><br>
+
+                I am an MS student in Computer Science at Boston University. I am specializing in Cybersecurity. I am currently working with Prof. Trachtenberg
+                 on exposure notifications.
+                
+            </p>
+
+            <div class="current-projects">
+                <h2>Current Projects</h1>
+                    <ol>
+                        <li>Exposure notifications</li>
+                        
+                    </ol>
+            </div>
+
+            <h2>Past Projects</h1>
+                <div class="past-projects">
+                    <ol>
+                        <li>Digital Equity</li>
+                    </ol>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

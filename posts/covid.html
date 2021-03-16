@@ -1,0 +1,26 @@
+<h1>Building an Automated exposure notication system for COVID-19</h1> 
+<div> April 2020, I was hired by Ari Trachtenberg to deliver a feasible product for BU to implement automated exposure notifications, and to build an application that was flexible enough to be a research tool.
+</div><br>
+
+<div>
+We wanted to familiarize ourselves with the inherent privacy problems in an exposure notification framework so that we could do security reviews of contemporary implementations of the same by private software companies.
+</div>
+<br>
+Challenges Faced
+<ul>
+<li>Challenge 1<br>
+Experiment with different sensor technologies to determine a close contact and deploy the one with best results<br>
+I experimented with ZigBee, GPS, Ultrasonic chirps, and Bluetooth Low Energy. I had to test for parameters like battery consumption, metadata transference, accuracy in determining distance, sensor cost,  and in the case of Ultrasound, how pets reacted to the chirps. It was a nuanced problem to solve and the trade-offs and benefits of each technology had to be concisely presented to the team for a decision to be made. We went with Bluetooth and decided to complement it with GPS for indoor and outdoor local computations only to account for poor distance accuracy of bluetooth.
+</li>
+<li>
+Challenge 2<br>
+The biological factors constituting an exposure for COVID-19 are a moving goalpost that we kept adapting our application to. <br>
+ Boston University’s medical school provided us data and research papers that surveyed disease spread. The variance in time spent together, and distance between confirmed close contacts was a problem that was solved by talking about a risk equation to be developed which used data to check if the contact was indoors or outdoors, environment airflow, type of mask worn by the contacts, among others.
+</li>
+<li>
+Challenge 3<br>
+Increase trust and adoption in our application<br>
+While collaborating to design the front-end of our application, we worked with Anand Devaiah from BU’s medical school to make sure it was understandable for someone with a non-technical background and provided users with reasons to trust it. This is why we included a dedicated section talking about how the application discovered and registered close contacts. I took it upon myself to shoot a home video with my roommates to create a blueprint of how a video demonstration of the application would look like if we distributed it among BU students.
+</li>
+</ul>
+

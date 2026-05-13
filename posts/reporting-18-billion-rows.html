@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Designing a reporting layer on 18 billion rows - Manan Monga</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #ffffff; --bg-alt: #f5f5f7; --text: #1d1d1f; --muted: #6e6e73; --subtle: #86868b; --border: #d2d2d7; --accent: #0071e3; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: var(--accent); } a:hover { text-decoration: underline; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.82); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+        .nav-logo { font-size: 0.95rem; font-weight: 600; } .nav-logo a { color: var(--text); }
+        .nav-back { font-size: 0.8rem; } .nav-back a { color: var(--muted); } .nav-back a:hover { color: var(--text); }
+        .post-wrap { max-width: 680px; margin: 0 auto; padding: 6rem 2rem 5rem; }
+        .post-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+        .post-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); margin-bottom: 1rem; }
+        .post-meta { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+        .post-date { font-size: 0.82rem; color: var(--subtle); }
+        .tag { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 980px; font-size: 0.72rem; font-weight: 500; background: var(--bg-alt); border: 1px solid var(--border); color: var(--muted); }
+        .post-body h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 2.5rem 0 0.75rem; }
+        .post-body h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); margin: 1.75rem 0 0.5rem; }
+        .post-body p { font-size: 1rem; color: var(--muted); margin-bottom: 1.1rem; line-height: 1.75; }
+        .post-body code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; color: var(--text); border: 1px solid var(--border); }
+        .callout { background: #f0f7ff; border: 1px solid #bdd9f7; border-radius: 12px; padding: 1.25rem 1.5rem; margin: 2rem 0; }
+        .callout p { margin: 0; color: #1d3557; }
+        .wid { background: var(--bg-alt); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; padding: 1.25rem 1.5rem; margin: 3rem 0 1rem; }
+        .wid-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+        .wid p { margin-bottom: 0.75rem; font-size: 0.95rem; } .wid p:last-child { margin-bottom: 0; }
+        .post-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .post-footer a { font-size: 0.85rem; color: var(--accent); }
+        /* Decision table */
+        .decision-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.85rem; }
+        .decision-table th { background: var(--bg-alt); color: var(--text); font-weight: 600; text-align: left; padding: 0.6rem 0.9rem; border: 1px solid var(--border); }
+        .decision-table td { padding: 0.6rem 0.9rem; border: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+        .decision-table tr:nth-child(even) td { background: #fafafa; }
+        .decision-table td:nth-child(3) { color: var(--text); font-weight: 500; }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="nav-logo"><a href="../index.html">Manan Monga</a></div>
+    <div class="nav-back"><a href="../index.html#projects">← All posts</a></div>
+</nav>
+<div class="post-wrap">
+    <p class="post-eyebrow">Architecture</p>
+    <h1 class="post-title">Designing a reporting layer on 18 billion rows without exploding your infrastructure</h1>
+    <div class="post-meta">
+        <span class="post-date">April 2026</span>
+        <span class="tag">clickhouse</span>
+        <span class="tag">architecture</span>
+        <span class="tag">data-modeling</span>
+    </div>
+    <div class="post-body">
+        <p>When the PV2 Vendor Risk Management product needed a reporting layer (dashboards showing observation trends, vendor risk distribution, threat levels), the raw material was 18.1 billion rows in ClickHouse. The question wasn't whether we could query it. The question was how to do it without a dedicated cluster that cost more than the feature was worth at this stage.</p>
+        <p>The answer required actually looking at the data before making any architecture decisions.</p>
+
+        <h2>Profile first, design second</h2>
+        <p>The instinct when asked to design a reporting layer is to immediately start thinking about materialized views, pre-aggregations, or a separate OLAP store. I resisted that instinct and spent time profiling the production data first. This is the step that most engineers skip, and it's the step that saved us ~170 GB of storage and an entire infrastructure deployment.</p>
+
+        <h3>The row fan-out analysis</h3>
+        <p>The initial design proposed pre-joining observations with vendor metadata and storing the result, essentially denormalizing for query speed. I calculated what that would actually produce: a 6.83x row multiplication. 18.1B rows × 6.83 = ~123B rows, requiring ~170 GB of additional storage. And the query performance benefit was marginal. A well-indexed query-time JOIN in ClickHouse would be nearly as fast, because ClickHouse's columnar storage makes joins much cheaper than in row-store databases.</p>
+        <p>I chose the query-time JOIN and documented the calculation. 170 GB saved. No denormalization.</p>
+
+        <h3>The 29x data reduction</h3>
+        <p>The second finding from profiling: not all 18.1B rows are relevant for Iteration 1 reporting widgets. The widgets we were building needed data filtered to specific threat levels. By applying this filter at ingestion time, only materializing rows above a certain threat level into the reporting namespace, I reduced the dataset from 18.1B rows to 619M rows. A 29x reduction that covered every Iteration 1 requirement.</p>
+
+        <h2>The architecture decisions</h2>
+        <table class="decision-table">
+            <thead>
+                <tr><th>Decision</th><th>Alternative</th><th>Choice</th><th>Why</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Storage</td><td>Query raw observations</td><td>Dedicated reporting namespace (39 GB)</td><td>Isolate reporting load; zero risk to production writes</td></tr>
+                <tr><td>Join strategy</td><td>Pre-join + store (123B rows)</td><td>Query-time JOIN</td><td>170 GB saved; ClickHouse columnar makes it fast enough</td></tr>
+                <tr><td>Ingestion scope</td><td>All 18.1B rows</td><td>Threat level filter → 619M rows</td><td>29x reduction covers all Iteration 1 widgets</td></tr>
+                <tr><td>Pipeline</td><td>Flink streaming pipeline</td><td>ClickHouse Materialized Views (Iteration 1)</td><td>Zero new infrastructure; Flink path documented for scale</td></tr>
+                <tr><td>Query caching</td><td>ClickHouse only</td><td>Cube.dev semantic layer</td><td>&lt;500ms perceived latency on cache hit</td></tr>
+            </tbody>
+        </table>
+
+        <h2>ClickHouse Materialized Views for Iteration 1</h2>
+        <p>ClickHouse has a nice property: you can define a materialized view that's triggered by inserts into a source table. Whenever new observations land in the base table, the MV automatically aggregates them into the reporting table. This gives you near-real-time reporting data without a separate Flink pipeline.</p>
+        <p>This was the right choice for Iteration 1 because it required zero new infrastructure and the latency was acceptable. The MV runs within seconds of the base insert. For Iteration 2, if query patterns get more complex or the data volume grows beyond what ClickHouse MVs can handle efficiently, the migration path to a proper Flink enrichment pipeline is already documented.</p>
+        <p>The temptation in situations like this is to build the full solution from the start. But Iteration 1 widgets had specific, bounded query patterns. Building Flink + Cube.dev + a full semantic layer for requirements that a ClickHouse MV handles correctly is engineering for imagined future scale, not actual current requirements.</p>
+
+        <h2>Cross-team coordination</h2>
+        <p>This project had an aspect that was new for me: the architecture document had to define work for teams other than mine. The reporting layer spans four epics: Data Taxonomy, Flink Stream Enrichment (mine), ClickHouse Schema (partner team), and Cube.dev Semantic Layer (partner team). I had to define the technical contracts between layers precisely enough that teams could build in parallel without waiting on each other.</p>
+        <p>The forcing function for getting this right is asking: if a team implements their layer exactly as I've specified, will it connect correctly to what I'm building? And if it won't, where is the ambiguity in my spec that allows the misconnection?</p>
+        <div class="callout">
+            <p>The most valuable part of this project wasn't the architecture. It was profiling the data before committing to the architecture. Numbers change decisions. Intuitions about 18 billion rows are often wrong.</p>
+        </div>
+    </div>
+    <div class="post-footer">
+        <a href="cross-region-state-sync.html">← Previous post</a>
+        <a href="schema-publishing.html">Next: Schema publishing for three languages →</a>
+    </div>
+</div>
+</body>
+</html>

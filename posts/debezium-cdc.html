@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stateful stream enrichment with Debezium CDC - Manan Monga</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #ffffff; --bg-alt: #f5f5f7; --text: #1d1d1f; --muted: #6e6e73; --subtle: #86868b; --border: #d2d2d7; --accent: #0071e3; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: var(--accent); }
+        a:hover { text-decoration: underline; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.82); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+        .nav-logo { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+        .nav-logo a { color: var(--text); }
+        .nav-back { font-size: 0.8rem; color: var(--muted); }
+        .nav-back a { color: var(--muted); }
+        .nav-back a:hover { color: var(--text); }
+        .post-wrap { max-width: 680px; margin: 0 auto; padding: 6rem 2rem 5rem; }
+        .post-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+        .post-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); margin-bottom: 1rem; }
+        .post-meta { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+        .post-date { font-size: 0.82rem; color: var(--subtle); }
+        .tag { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 980px; font-size: 0.72rem; font-weight: 500; background: var(--bg-alt); border: 1px solid var(--border); color: var(--muted); }
+        .post-body h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 2.5rem 0 0.75rem; }
+        .post-body h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); margin: 1.75rem 0 0.5rem; }
+        .post-body p { font-size: 1rem; color: var(--muted); margin-bottom: 1.1rem; line-height: 1.75; }
+        .post-body code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; color: var(--text); border: 1px solid var(--border); }
+        .post-body pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0; overflow-x: auto; }
+        .post-body pre code { background: none; border: none; padding: 0; font-size: 0.875rem; }
+        .callout { background: #f0f7ff; border: 1px solid #bdd9f7; border-radius: 12px; padding: 1.25rem 1.5rem; margin: 2rem 0; }
+        .callout p { margin: 0; color: #1d3557; }
+        .wid { background: var(--bg-alt); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; padding: 1.25rem 1.5rem; margin: 3rem 0 1rem; }
+        .wid-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+        .wid p { margin-bottom: 0.75rem; font-size: 0.95rem; }
+        .wid p:last-child { margin-bottom: 0; }
+        .post-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .post-footer a { font-size: 0.85rem; color: var(--accent); }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="nav-logo"><a href="../index.html">Manan Monga</a></div>
+    <div class="nav-back"><a href="../index.html#projects">← All posts</a></div>
+</nav>
+<div class="post-wrap">
+    <p class="post-eyebrow">Engineering</p>
+    <h1 class="post-title">Stateful stream enrichment with Debezium CDC: the multi-speed join problem</h1>
+    <div class="post-meta">
+        <span class="post-date">March 2026</span>
+        <span class="tag">flink</span>
+        <span class="tag">kafka</span>
+        <span class="tag">debezium</span>
+        <span class="tag">cdc</span>
+        <span class="tag">clickhouse</span>
+    </div>
+    <div class="post-body">
+        <p>The CVE vulnerability pipeline at SecurityScorecard was the first Flink pipeline I built from scratch at the company. It became the foundational pattern for everything that followed. But the most interesting engineering in it wasn't the happy path. It was what happened when two streams moved at completely different speeds.</p>
+
+        <h2>What we were trying to do</h2>
+        <p>The goal was to enrich security observations with CVE vulnerability details in real time. An observation arrives saying 'this host has port 443 open running OpenSSL 1.0.2.' We want to augment that with: is there a known CVE for this version of OpenSSL? Is it in the CISA KEV catalog? What does the vendor recommend?</p>
+        <p>The CVE reference data lives in Postgres. The observations come in from Kafka. The enrichment needs to happen at streaming speed. Querying Postgres on the hot path for every observation would destroy throughput.</p>
+        <p>The architecture I chose: materialize the CVE reference data into Flink's RocksDB state via Debezium CDC, so enrichment is a local lookup with no external dependency.</p>
+
+        <h2>How Debezium CDC works in this context</h2>
+        <p>Debezium tails PostgreSQL's Write-Ahead Log and publishes every insert, update, and delete as a structured event to Kafka. So instead of querying Postgres directly, I have a Kafka topic that's a real-time changelog of the CVE table. I consume this topic in Flink and materialize the current state into RocksDB, effectively a local, in-process copy of the CVE reference data that stays in sync automatically.</p>
+        <p>Enrichment then becomes: for each observation, look up the relevant CVE data from local RocksDB state. Microseconds, not milliseconds. No network hop, no external dependency on the critical path.</p>
+
+        <h2>The multi-speed problem</h2>
+        <p>Here's where it gets interesting. I'm joining two Kafka topics in Flink: the observations topic (high volume, constant throughput, thousands of events per second) and the Debezium CDC topic (low volume, event-driven, only produces when Postgres changes, which might be once every few minutes).</p>
+        <p>Flink's global watermark is the mechanism that tells the engine when to close time windows and emit results. It's the minimum of all source watermarks. That's an important detail. When one source goes quiet, its watermark stops advancing. And when that source's watermark stops advancing, the global watermark stops too.</p>
+        <p>So: the CDC topic goes quiet for two minutes (no Postgres changes). Its watermark freezes at T. The observation topic keeps producing events. Its watermark is at T+2min. The global watermark is still T. Every observation window that should have closed at T+30s, T+1min, T+2min: none of them fire. The pipeline is silently stalled.</p>
+
+        <h2>The symptom vs. the cause</h2>
+        <p>The symptom was intermittent window stall. Output would just stop for a while, then resume when the CDC topic produced an event. No errors. No alerts. Just silence.</p>
+        <p>The cause took a while to find because Flink doesn't loudly announce watermark freezes. I had to instrument watermark progression explicitly, logging the per-source watermarks and the global watermark at regular intervals, then correlate them with CDC topic activity to see the pattern.</p>
+
+        <h2>The fix</h2>
+        <p>Flink has a built-in mechanism for exactly this situation: per-source idle timeouts. You configure a duration, and if a source produces no events for that duration, Flink stops including it in the global watermark calculation. The fast source advances freely; if the slow source wakes up with a late event, it's handled as late data.</p>
+        <pre><code>WatermarkStrategy
+  .forBoundedOutOfOrderness(Duration.ofSeconds(10))
+  .withIdleness(Duration.ofSeconds(30));</code></pre>
+        <p>Simple to configure. The hard part was diagnosing that this was the problem in the first place.</p>
+
+        <h2>Side-output fan-outs</h2>
+        <p>The other design decision worth explaining: I used Flink's side output pattern to write to multiple ClickHouse tables from a single pipeline. One Flink job processes the enriched observation stream and emits to four side outputs: the main observations table, the CVE details table, the CISA KEV flags table, and the vendor recommendations table.</p>
+        <p>The alternative would have been four separate pipelines, each consuming the same input and doing their own enrichment. That means four copies of the RocksDB state, four sets of Kafka consumer offsets, four deployment configurations. The side output approach keeps the enrichment state centralized and cuts the operational overhead significantly.</p>
+        <p>This pipeline became the template for everything else we built. Getting the foundational patterns right (stateful enrichment, idle timeouts, side-output fan-outs) meant every engineer who followed had a working reference implementation to learn from and extend.</p>
+
+        <div class="wid">
+            <div class="wid-label">What I'd do differently</div>
+            <p>I'd add explicit watermark lag alerting from the start. The idle timeout fix prevents the stall, but if the CDC topic goes quiet for longer than expected, I want an alert. It might mean Debezium is stuck, not just quiet. The fix handles the symptom; an alert catches the cause.</p>
+        </div>
+    </div>
+    <div class="post-footer">
+        <a href="flink-vs-spark.html">← Previous post</a>
+        <a href="cross-region-state-sync.html">Next: Cross-region state sync →</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-region state sync without a central database - Manan Monga</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #ffffff; --bg-alt: #f5f5f7; --text: #1d1d1f; --muted: #6e6e73; --subtle: #86868b; --border: #d2d2d7; --accent: #0071e3; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: var(--accent); }
+        a:hover { text-decoration: underline; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.82); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+        .nav-logo { font-size: 0.95rem; font-weight: 600; } .nav-logo a { color: var(--text); }
+        .nav-back { font-size: 0.8rem; } .nav-back a { color: var(--muted); } .nav-back a:hover { color: var(--text); }
+        .post-wrap { max-width: 680px; margin: 0 auto; padding: 6rem 2rem 5rem; }
+        .post-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+        .post-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); margin-bottom: 1rem; }
+        .post-meta { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+        .post-date { font-size: 0.82rem; color: var(--subtle); }
+        .tag { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 980px; font-size: 0.72rem; font-weight: 500; background: var(--bg-alt); border: 1px solid var(--border); color: var(--muted); }
+        .post-body h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 2.5rem 0 0.75rem; }
+        .post-body h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); margin: 1.75rem 0 0.5rem; }
+        .post-body p { font-size: 1rem; color: var(--muted); margin-bottom: 1.1rem; line-height: 1.75; }
+        .post-body code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; color: var(--text); border: 1px solid var(--border); }
+        .callout { background: #f0f7ff; border: 1px solid #bdd9f7; border-radius: 12px; padding: 1.25rem 1.5rem; margin: 2rem 0; }
+        .callout p { margin: 0; color: #1d3557; }
+        .wid { background: var(--bg-alt); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; padding: 1.25rem 1.5rem; margin: 3rem 0 1rem; }
+        .wid-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+        .wid p { margin-bottom: 0.75rem; font-size: 0.95rem; }
+        .wid p:last-child { margin-bottom: 0; }
+        .post-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .post-footer a { font-size: 0.85rem; color: var(--accent); }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="nav-logo"><a href="../index.html">Manan Monga</a></div>
+    <div class="nav-back"><a href="../index.html#projects">← All posts</a></div>
+</nav>
+<div class="post-wrap">
+    <p class="post-eyebrow">Engineering</p>
+    <h1 class="post-title">Cross-region state sync without a central database</h1>
+    <div class="post-meta">
+        <span class="post-date">April 2026</span>
+        <span class="tag">kafka</span>
+        <span class="tag">flink</span>
+        <span class="tag">clickhouse</span>
+        <span class="tag">distributed-systems</span>
+    </div>
+    <div class="post-body">
+        <p>SecurityScorecard runs in multiple AWS regions. Users in different regions interact with the same observations: accepting risk, flagging issues, requesting remediation. When a user in us-east-1 accepts a risk, a user in eu-west-1 should see that action reflected. Without a sync mechanism, they won't.</p>
+        <p>The naive solution is a centralized database that all regions write to and read from. I didn't build that. Here's why, and what I built instead.</p>
+
+        <h2>Why not a central database</h2>
+        <p>A central database for observation actions creates three problems. First, it's a single point of failure: if that database has an issue, all regions are affected. Second, it creates latency: every user action now involves a cross-region write, adding 50–150ms of RTT to an operation that should feel instant. Third, it's a data residency problem: many of SSC's enterprise customers have requirements about where their data lives, and routing all writes through a central store potentially violates those requirements.</p>
+        <p>The right architecture keeps data local to each region and synchronizes asynchronously.</p>
+
+        <h2>The architecture</h2>
+        <h3>Kafka as the replication backbone</h3>
+        <p>Every observation action (accept risk, flag, request remediation, update status, saved filters) is published as a Kafka event. Kafka gives us the durability guarantee we need: once published, the event will be delivered. If a region is temporarily unreachable, it catches up when it comes back online by replaying from its last consumed offset.</p>
+
+        <h3><code>originating_region</code> in message headers</h3>
+        <p>The subtle part: how do you prevent circular replication? If region A publishes an event and region B consumes it and publishes it again, you get an infinite loop.</p>
+        <p>The fix is simple: every event carries its originating region in a Kafka message header. Each region's Flink consumer filters out events it originated; it only absorbs events from other regions. Region A publishes, region B sees <code>originating_region=us-east-1</code>, absorbs it. Region A sees the same event, sees <code>originating_region=us-east-1</code>, skips it. No coordination needed, no central authority.</p>
+
+        <h3>ReplicatedReplacingMergeTree in ClickHouse</h3>
+        <p>On the storage side, I used ClickHouse's <code>ReplicatedReplacingMergeTree</code> engine. This combines two properties:</p>
+        <p><strong>Replicated</strong> - ClickHouse replicates data across nodes within the cluster for high availability. A node failure doesn't lose data.</p>
+        <p><strong>Replacing</strong> - during background merges, ClickHouse keeps only the latest version of rows with the same primary key. If the same action arrives twice due to at-least-once Kafka delivery, only one row survives. The system is idempotent.</p>
+        <p>Together, these give you exactly-once semantics at the storage layer without distributed transactions, which would be far more complex and far slower.</p>
+
+        <h2>The tradeoff I made explicitly</h2>
+        <p>This is an AP system in CAP theorem terms. There is a brief window, typically a few seconds, where different regions see different states. A user who accepts a risk in us-east-1 will see the action reflected immediately in their region. A user checking from eu-west-1 in the next few seconds might not see it yet.</p>
+        <p>I documented this tradeoff and chose it deliberately. The alternative, synchronous cross-region writes, would have meant every user action blocks on a cross-region round trip. That's a 50–150ms hit on every interaction, plus a reliability dependency on inter-region connectivity. For observation actions, eventual consistency on the order of seconds is an acceptable tradeoff. These aren't financial transactions.</p>
+        <div class="callout">
+            <p>The system is eventually consistent, idempotent, and partition-tolerant. It degrades gracefully: if a region is isolated, it keeps working with its local state and catches up when connectivity is restored.</p>
+        </div>
+
+        <div class="wid">
+            <div class="wid-label">What I'd do differently</div>
+            <p>I'd add a replication lag metric visible to the team: how far behind is each region from the latest event? Right now you'd have to query Kafka consumer group offsets and do the math yourself. A dashboard showing per-region replication lag would make it immediately obvious if something is falling behind.</p>
+        </div>
+    </div>
+    <div class="post-footer">
+        <a href="debezium-cdc.html">← Previous post</a>
+        <a href="reporting-18-billion-rows.html">Next: Reporting on 18B rows →</a>
+    </div>
+</div>
+</body>
+</html>

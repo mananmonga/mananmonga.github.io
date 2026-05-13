@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How a Redis network bottleneck cost $2.3M/year - Manan Monga</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #ffffff; --bg-alt: #f5f5f7; --text: #1d1d1f; --muted: #6e6e73; --subtle: #86868b; --border: #d2d2d7; --accent: #0071e3; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: var(--accent); } a:hover { text-decoration: underline; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.82); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+        .nav-logo { font-size: 0.95rem; font-weight: 600; } .nav-logo a { color: var(--text); }
+        .nav-back { font-size: 0.8rem; } .nav-back a { color: var(--muted); } .nav-back a:hover { color: var(--text); }
+        .post-wrap { max-width: 680px; margin: 0 auto; padding: 6rem 2rem 5rem; }
+        .post-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+        .post-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); margin-bottom: 1rem; }
+        .post-meta { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+        .post-date { font-size: 0.82rem; color: var(--subtle); }
+        .tag { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 980px; font-size: 0.72rem; font-weight: 500; background: var(--bg-alt); border: 1px solid var(--border); color: var(--muted); }
+        .post-body h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 2.5rem 0 0.75rem; }
+        .post-body p { font-size: 1rem; color: var(--muted); margin-bottom: 1.1rem; line-height: 1.75; }
+        .post-body code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; color: var(--text); border: 1px solid var(--border); }
+        .callout { background: #f0f7ff; border: 1px solid #bdd9f7; border-radius: 12px; padding: 1.25rem 1.5rem; margin: 2rem 0; }
+        .callout p { margin: 0; color: #1d3557; }
+        .wid { background: var(--bg-alt); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; padding: 1.25rem 1.5rem; margin: 3rem 0 1rem; }
+        .wid-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+        .wid p { margin-bottom: 0.75rem; font-size: 0.95rem; } .wid p:last-child { margin-bottom: 0; }
+        .post-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .post-footer a { font-size: 0.85rem; color: var(--accent); }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="nav-logo"><a href="../index.html">Manan Monga</a></div>
+    <div class="nav-back"><a href="../index.html#projects">← All posts</a></div>
+</nav>
+<div class="post-wrap">
+    <p class="post-eyebrow">Performance</p>
+    <h1 class="post-title">How a Redis network bottleneck cost $2.3M/year - and how I found it</h1>
+    <div class="post-meta">
+        <span class="post-date">2023</span>
+        <span class="tag">redis</span>
+        <span class="tag">aws</span>
+        <span class="tag">elasticache</span>
+        <span class="tag">performance</span>
+        <span class="tag">securonix</span>
+    </div>
+    <div class="post-body">
+        <p>This is a story about finding a problem nobody had formally identified, understanding it well enough to fix it correctly, and then having to convince an AWS service team to help you fix it. The technical part was interesting. The organizational part was harder.</p>
+
+        <h2>The background</h2>
+        <p>At Securonix, Redis was used heavily across the SIEM analytics pipeline: third-party data lookups, whitelist tables, enrichment caches. The Indicator Extraction Engine (IEE) ran at high parallelism: many executor threads simultaneously hitting Redis for lookups on every incoming security event.</p>
+        <p>Individually, each Redis read was fast. The problem was invisible until you looked at the aggregate.</p>
+
+        <h2>Finding the bottleneck</h2>
+        <p>I noticed anomalous Redis latency spikes in the metrics. Not high baseline latency, but intermittent spikes that correlated with IEE executor load. The spikes weren't CPU-correlated or memory-correlated. They were network-correlated.</p>
+        <p>The diagnosis: the IEE executor was generating a high volume of concurrent Redis read requests. Each read was small and fast in isolation, but the aggregate network I/O was saturating the Redis node's NIC. We were running on Redis node types that were not network-optimized: instances with relatively modest network throughput ceilings. We were paying for compute we didn't need and starving on network capacity we did.</p>
+        <p>The retry logic in the pipeline was masking the problem: transient timeouts caused by NIC saturation were being retried successfully most of the time, so the error rate was low. But the latency spikes were real, and the infrastructure was running inefficiently.</p>
+
+        <h2>Building the case</h2>
+        <p>I had to make two arguments: one technical (here's what's happening and here's the fix), one financial (here's what it's costing and here's what we save).</p>
+        <p>The technical argument was straightforward once I had the NIC saturation diagnosis: migrate to network-optimized ElastiCache node types, and add read replicas to distribute the concurrent read load across multiple nodes rather than concentrating it on one.</p>
+        <p>The financial argument required working out the cost difference between current node types and the proposed configuration, then modeling the projected savings. The number came out to $2.3M/year, large enough that it warranted a direct conversation with the AWS ElastiCache service team rather than a support ticket.</p>
+
+        <h2>Working with AWS</h2>
+        <p>The AWS ElastiCache team was genuinely helpful once I had a clear diagnosis and a specific ask. This is worth noting because 'work with AWS to reduce costs' sounds like a vague escalation. It wasn't. I came with: here is the observed behavior, here is my diagnosis of the cause, here is the configuration change I'm proposing, and here is the projected cost impact. That specificity made the conversation productive.</p>
+        <p>They confirmed the diagnosis and helped us validate the migration approach. We moved to network-optimized nodes and added read replicas. The latency spikes disappeared. The bill dropped.</p>
+        <div class="callout">
+            <p><strong>$2.3M/year reduction.</strong> Throughput actually improved once the bottleneck was gone.</p>
+        </div>
+
+        <div class="wid">
+            <div class="wid-label">What I learned</div>
+            <p>The most important thing I learned from this project is that retry logic is a liability disguised as a feature. The retries were hiding a real problem. If I hadn't been reading the metrics carefully, the NIC saturation would have continued indefinitely. The pipeline 'worked,' customers weren't complaining, there was no incident. Just an invisible $2.3M/year tax on doing the right thing the wrong way.</p>
+            <p>Read your metrics. Not just the alert-triggering ones.</p>
+        </div>
+    </div>
+    <div class="post-footer">
+        <a href="schema-publishing.html">← Previous post</a>
+        <a href="datadog-to-timestream.html">Next: Replacing Datadog with Timestream →</a>
+    </div>
+</div>
+</body>
+</html>

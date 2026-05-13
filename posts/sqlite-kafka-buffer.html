@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why I used SQLite as a Kafka replay buffer - Manan Monga</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #ffffff; --bg-alt: #f5f5f7; --text: #1d1d1f; --muted: #6e6e73; --subtle: #86868b; --border: #d2d2d7; --accent: #0071e3; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: var(--accent); } a:hover { text-decoration: underline; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.82); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+        .nav-logo { font-size: 0.95rem; font-weight: 600; } .nav-logo a { color: var(--text); }
+        .nav-back { font-size: 0.8rem; } .nav-back a { color: var(--muted); } .nav-back a:hover { color: var(--text); }
+        .post-wrap { max-width: 680px; margin: 0 auto; padding: 6rem 2rem 5rem; }
+        .post-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+        .post-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); margin-bottom: 1rem; }
+        .post-meta { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+        .post-date { font-size: 0.82rem; color: var(--subtle); }
+        .tag { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 980px; font-size: 0.72rem; font-weight: 500; background: var(--bg-alt); border: 1px solid var(--border); color: var(--muted); }
+        .post-body h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 2.5rem 0 0.75rem; }
+        .post-body p { font-size: 1rem; color: var(--muted); margin-bottom: 1.1rem; line-height: 1.75; }
+        .post-body ul { padding-left: 1.5rem; margin-bottom: 1.1rem; }
+        .post-body li { font-size: 1rem; color: var(--muted); margin-bottom: 0.5rem; line-height: 1.7; }
+        .post-body code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; color: var(--text); border: 1px solid var(--border); }
+        .callout { background: #f0f7ff; border: 1px solid #bdd9f7; border-radius: 12px; padding: 1.25rem 1.5rem; margin: 2rem 0; }
+        .callout p { margin: 0; color: #1d3557; }
+        .wid { background: var(--bg-alt); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; padding: 1.25rem 1.5rem; margin: 3rem 0 1rem; }
+        .wid-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+        .wid p { margin-bottom: 0.75rem; font-size: 0.95rem; } .wid p:last-child { margin-bottom: 0; }
+        .post-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .post-footer a { font-size: 0.85rem; color: var(--accent); }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="nav-logo"><a href="../index.html">Manan Monga</a></div>
+    <div class="nav-back"><a href="../index.html#projects">← All posts</a></div>
+</nav>
+<div class="post-wrap">
+    <p class="post-eyebrow">Reliability</p>
+    <h1 class="post-title">Why I used SQLite as a Kafka replay buffer, and why it was the right call</h1>
+    <div class="post-meta">
+        <span class="post-date">2024</span>
+        <span class="tag">kafka</span>
+        <span class="tag">reliability</span>
+        <span class="tag">sqlite</span>
+        <span class="tag">securonix</span>
+    </div>
+    <div class="post-body">
+        <p>The Securonix analytics pipelines were dropping about 2,000 events per month. In a SIEM, dropped events aren't just an SLA metric. They're potential missed detections. An attack pattern that spans a sequence of events becomes invisible if any event in the sequence is dropped.</p>
+        <p>The drops were caused by transient Kafka broker issues: brief unavailability during leader elections, network hiccups, the usual distributed systems noise. The pipeline had no durability layer. If Kafka wasn't available at the moment of a write, the event was gone.</p>
+        <p>I built a replay buffer to fix this. The interesting decision was the storage backend.</p>
+
+        <h2>Why retry logic alone doesn't work</h2>
+        <p>The first instinct is to add retry logic with exponential backoff. Retry, wait, retry, wait. Eventually the broker recovers and the write succeeds. This handles transient failures that resolve within seconds.</p>
+        <p>But it doesn't handle failures that last longer than your retry window. And critically, if the process restarts during a retry sequence (deployments, OOM kills, node replacements) you lose the in-flight events regardless of broker availability. Retry logic is in-memory. A process restart clears it.</p>
+        <p>A proper solution requires durability: events that fail to publish must be persisted somewhere that survives a process restart, and replayed when the broker recovers.</p>
+
+        <h2>Evaluating the options</h2>
+        <ul>
+            <li><strong>In-memory queue</strong> - fast, but loses data on process restart. Doesn't solve the problem.</li>
+            <li><strong>Redis</strong> - already in the stack, but adds a network hop. If Redis is also experiencing issues during the Kafka outage (not uncommon - network events affect multiple services), the buffer is unavailable.</li>
+            <li><strong>Postgres</strong> - full ACID guarantees, but heavyweight for a write-ahead buffer. Requires a network connection and another service to be healthy.</li>
+            <li><strong>SQLite</strong> - ACID guarantees, zero network dependency (file on local disk), zero infrastructure overhead, single-threaded writer model that eliminates concurrency bugs by design.</li>
+        </ul>
+
+        <h2>Why SQLite was right for this access pattern</h2>
+        <p>The access pattern for a replay buffer is simple: one writer (the pipeline failure handler), one reader (the retry loop), infrequent reads relative to writes, and durability is mandatory. SQLite is designed for exactly this: local, embedded, ACID, single-process. It's not a toy database. It's the right database for local durability requirements.</p>
+        <p>The single-threaded writer constraint that sometimes makes SQLite a poor choice for concurrent applications is actually an advantage here. I have one writer. I don't want two threads racing to write to the buffer. SQLite's serialized writes give me correct behavior without any synchronization code.</p>
+        <p>The replay logic uses idempotent Kafka producer semantics: each event carries the same key as the original publish attempt, so Kafka's idempotent producer deduplicates retries at the broker. Duplicate events don't reach downstream consumers.</p>
+        <div class="callout">
+            <p>The best solution wasn't the most sophisticated one. It was the one that matched the access pattern.</p>
+        </div>
+
+        <h2>The result</h2>
+        <p>Pipeline failure incidents dropped from ~2,000/month to ~400/month. A 5x improvement. The events that previously would have been dropped are now durably buffered and replayed. The change was invisible to the downstream consumers. They just stopped seeing gaps.</p>
+
+        <div class="wid">
+            <div class="wid-label">What I'd do differently</div>
+            <p>I'd add a buffer depth metric (how many events are currently queued in the SQLite buffer) and alert on it. Under normal conditions the buffer should be empty or near-empty. A growing buffer is a leading indicator that Kafka publish failures are accumulating faster than the retry loop can drain them, which means something more serious is happening. I added this monitoring later; it should have been part of the initial implementation.</p>
+        </div>
+    </div>
+    <div class="post-footer">
+        <a href="datadog-to-timestream.html">← Previous post</a>
+        <a href="../index.html#projects">← All posts</a>
+    </div>
+</div>
+</body>
+</html>

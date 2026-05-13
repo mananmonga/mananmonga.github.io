@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replacing $300K/month of Datadog with AWS Timestream - Manan Monga</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #ffffff; --bg-alt: #f5f5f7; --text: #1d1d1f; --muted: #6e6e73; --subtle: #86868b; --border: #d2d2d7; --accent: #0071e3; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: var(--accent); } a:hover { text-decoration: underline; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.82); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+        .nav-logo { font-size: 0.95rem; font-weight: 600; } .nav-logo a { color: var(--text); }
+        .nav-back { font-size: 0.8rem; } .nav-back a { color: var(--muted); } .nav-back a:hover { color: var(--text); }
+        .post-wrap { max-width: 680px; margin: 0 auto; padding: 6rem 2rem 5rem; }
+        .post-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+        .post-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); margin-bottom: 1rem; }
+        .post-meta { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+        .post-date { font-size: 0.82rem; color: var(--subtle); }
+        .tag { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 980px; font-size: 0.72rem; font-weight: 500; background: var(--bg-alt); border: 1px solid var(--border); color: var(--muted); }
+        .post-body h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 2.5rem 0 0.75rem; }
+        .post-body h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); margin: 1.75rem 0 0.5rem; }
+        .post-body p { font-size: 1rem; color: var(--muted); margin-bottom: 1.1rem; line-height: 1.75; }
+        .post-body code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: var(--bg-alt); padding: 0.15em 0.4em; border-radius: 4px; color: var(--text); border: 1px solid var(--border); }
+        .callout { background: #f0f7ff; border: 1px solid #bdd9f7; border-radius: 12px; padding: 1.25rem 1.5rem; margin: 2rem 0; }
+        .callout p { margin: 0; color: #1d3557; }
+        .wid { background: var(--bg-alt); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; padding: 1.25rem 1.5rem; margin: 3rem 0 1rem; }
+        .wid-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+        .wid p { margin-bottom: 0.75rem; font-size: 0.95rem; } .wid p:last-child { margin-bottom: 0; }
+        .post-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .post-footer a { font-size: 0.85rem; color: var(--accent); }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="nav-logo"><a href="../index.html">Manan Monga</a></div>
+    <div class="nav-back"><a href="../index.html#projects">← All posts</a></div>
+</nav>
+<div class="post-wrap">
+    <p class="post-eyebrow">Observability</p>
+    <h1 class="post-title">Replacing $300K/month of Datadog with AWS Timestream</h1>
+    <div class="post-meta">
+        <span class="post-date">2023</span>
+        <span class="tag">observability</span>
+        <span class="tag">aws</span>
+        <span class="tag">timestream</span>
+        <span class="tag">spark</span>
+        <span class="tag">securonix</span>
+    </div>
+    <div class="post-body">
+        <p>In the first month after Securonix's Spark analytics applications scaled to production volume, the Datadog bill was $300K. That's not a typo. Annualized, it was on track for $3.6M/year. Just for metrics and dashboards.</p>
+        <p>The standard response to a SaaS bill this size is to negotiate pricing, reduce log volume, or accept it as the cost of doing business. I had a different take: we were paying Datadog to store and query time-series data at scale. AWS Timestream does exactly that at a fraction of the cost. The observability value didn't have to go away. The vendor did.</p>
+
+        <h2>What Datadog was actually doing for us</h2>
+        <p>It's worth being precise about this, because replacing an observability tool without maintaining observability fidelity is just trading one problem for another.</p>
+        <p>We were using Datadog for: custom metrics from Spark executors (throughput, error rates, record processing rates), consumer lag monitoring, processing latency histograms, and Grafana-style dashboards for the operations team. These weren't vanity metrics. The ops team used them daily for incident detection and pipeline debugging.</p>
+
+        <h2>The replacement stack</h2>
+        <h3>Custom metric collectors in Spark</h3>
+        <p>Rather than using Datadog's agent, I instrumented the Spark applications directly. Each executor emits structured metrics (throughput, error counts, consumer lag, processing latency) to a Kinesis stream. This gave us control over exactly what was being emitted and how, rather than depending on Datadog's agent to capture the right signals.</p>
+
+        <h3>AWS Timestream as the backend</h3>
+        <p>Timestream is a managed time-series database with two storage tiers: a memory store for recent data (fast reads, higher cost) and a magnetic store for historical data (slower reads, much lower cost). Data automatically transitions between tiers based on a configurable retention policy. For our use case, fast access to the last 24 hours and slower access to the last 30 days, it was a perfect fit.</p>
+        <p>The query interface is SQL-based, which made it easy for the team to write ad-hoc queries for debugging without learning a new query language.</p>
+
+        <h3>Grafana connected to Timestream</h3>
+        <p>Grafana has a native Timestream data source plugin. I rebuilt the dashboards the ops team depended on (pipeline health, consumer lag, error rates) with the same granularity and alert thresholds as the Datadog equivalents. The transition was invisible to the team from a workflow perspective.</p>
+
+        <div class="callout">
+            <p><strong>$300K/month Datadog spend replaced.</strong> Zero reduction in observability coverage. The team retained all critical metrics, dashboards, and alerting.</p>
+        </div>
+
+        <h2>The non-obvious tradeoffs</h2>
+        <p>Datadog has features Timestream doesn't: distributed tracing, log aggregation, APM. We weren't using those features at the scale that justified the cost, but if we had been, the math would have been different. This replacement made sense for our specific workload: high-volume custom metrics from Spark applications. It wouldn't be the right call for a team that's deeply invested in Datadog's tracing and log correlation features.</p>
+        <p>The other tradeoff: Timestream requires more operational ownership than Datadog. Datadog handles retention, scaling, and querying for you. With Timestream, you manage retention policies, configure tiering, and write your own queries. For a team with the engineering capacity to maintain this, it's fine. For a smaller team, the operational overhead might outweigh the cost savings.</p>
+    </div>
+    <div class="post-footer">
+        <a href="redis-bottleneck.html">← Previous post</a>
+        <a href="sqlite-kafka-buffer.html">Next: SQLite as a Kafka replay buffer →</a>
+    </div>
+</div>
+</body>
+</html>

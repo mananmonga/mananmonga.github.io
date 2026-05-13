@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manan Monga — Senior Software Engineer</title>
+    <title>Manan Monga - Senior Software Engineer</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
@@ -451,7 +451,7 @@
         <div class="about-grid fade-in">
             <img src="assets/avatar.jpeg" alt="Manan Monga" class="avatar">
             <div class="about-text">
-                <p>I'm a Senior Software Engineer at <span class="hl">SecurityScorecard</span>, where I architect real-time data streaming infrastructure using Apache Flink and Kafka — ingesting billions of daily security observations with stateful enrichment at scale.</p>
+                <p>I'm a Senior Software Engineer at <span class="hl">SecurityScorecard</span>, where I architect real-time data streaming infrastructure using Apache Flink and Kafka - ingesting billions of daily security observations with stateful enrichment at scale.</p>
                 <p>Previously at Securonix, I built high-performance SIEM cloud applications on AWS and led cloud security engineering, including a Redis optimization that reduced cloud costs by <span class="hl">$2.3M per year</span> in collaboration with the AWS Elasticache team.</p>
                 <p>I hold an MS in Computer Science (Cybersecurity) from <a href="https://www.bu.edu" target="_blank">Boston University</a> and conducted research on privacy-sensitive contact tracing at BU's Hariri Institute for Computing.</p>
                 <p>Outside of work I play soccer, cook from Gordon Ramsay's YouTube videos, and will enthusiastically argue that Manchester City are the best team in the land and all the world.</p>
@@ -564,7 +564,7 @@
 
             <div class="timeline-item fade-in">
                 <div class="timeline-header">
-                    <span class="timeline-company">Boston University — Hariri Institute for Computing</span>
+                    <span class="timeline-company">Boston University - Hariri Institute for Computing</span>
                     <span class="timeline-location">Boston, MA</span>
                 </div>
                 <div class="timeline-role">Graduate Research Assistant</div>
@@ -585,19 +585,85 @@
     <div class="section-wrap">
         <p class="section-eyebrow fade-in">Projects & Writing</p>
         <h2 class="section-title fade-in">Blog Posts & Projects.</h2>
+        <!-- Writing -->
+        <p class="section-eyebrow fade-in" style="margin-bottom: 0.6rem;">Writing</p>
+        <h3 class="fade-in" style="font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; color: var(--text); margin-bottom: 1.25rem;">Engineering posts</h3>
+        <div class="projects-grid" style="margin-bottom: 3rem;">
+
+            <a href="posts/flink-vs-spark.html" class="project-card fade-in">
+                <span class="project-icon">⚡</span>
+                <h3>Why I chose Flink over Spark, and what it took to prove it was worth it</h3>
+                <p>How 50 deploy-measure-adjust cycles got MOP-v2 from 9M to 35M+ records/min with zero new infrastructure.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/debezium-cdc.html" class="project-card fade-in">
+                <span class="project-icon">🔄</span>
+                <h3>Stateful stream enrichment with Debezium CDC: the multi-speed join problem</h3>
+                <p>What happens when two Kafka streams move at completely different speeds - and how Flink's idle timeout saves you.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/cross-region-state-sync.html" class="project-card fade-in">
+                <span class="project-icon">🌐</span>
+                <h3>Cross-region state sync without a central database</h3>
+                <p>Eventual consistency via Kafka + ReplicatedReplacingMergeTree - and why that tradeoff was the right one.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/reporting-18-billion-rows.html" class="project-card fade-in">
+                <span class="project-icon">📊</span>
+                <h3>Designing a reporting layer on 18 billion rows without exploding your infrastructure</h3>
+                <p>Profile first, design second. How a 29x data reduction and a query-time JOIN saved 170 GB and an entire cluster.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/schema-publishing.html" class="project-card fade-in">
+                <span class="project-icon">📦</span>
+                <h3>The invisible infrastructure: building schema publishing for three languages</h3>
+                <p>50+ Protobuf definitions, three build systems, Buf governance, and CI/CD that makes the right thing automatic.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/redis-bottleneck.html" class="project-card fade-in">
+                <span class="project-icon">💸</span>
+                <h3>How a Redis network bottleneck cost $2.3M/year - and how I found it</h3>
+                <p>NIC saturation, retry logic hiding a real problem, and what it took to convince an AWS service team to act.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/datadog-to-timestream.html" class="project-card fade-in">
+                <span class="project-icon">📉</span>
+                <h3>Replacing $300K/month of Datadog with AWS Timestream</h3>
+                <p>Kinesis + Timestream + Grafana. Same observability coverage, a fraction of the cost.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/sqlite-kafka-buffer.html" class="project-card fade-in">
+                <span class="project-icon">🗄️</span>
+                <h3>Why I used SQLite as a Kafka replay buffer, and why it was the right call</h3>
+                <p>2,000 dropped events/month → 400. Why the simplest durable store was the right one for this access pattern.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+        </div>
+
+        <!-- Older projects -->
+        <p class="section-eyebrow fade-in" style="margin-bottom: 0.6rem;">Earlier work</p>
+        <h3 class="fade-in" style="font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; color: var(--text); margin-bottom: 1.25rem;">Research & projects</h3>
         <div class="projects-grid">
 
             <a href="posts/covid.html" class="project-card fade-in">
                 <span class="project-icon">🔬</span>
                 <h3>Automated COVID-19 Exposure Notification System</h3>
-                <p>Cross-platform contact tracing using BLE for privacy-sensitive exposure detection.</p>
+                <p>Cross-platform BLE contact tracing app built at BU's Hariri Institute.</p>
                 <span class="project-link">Read more</span>
             </a>
 
             <a href="posts/provenance_python.html" class="project-card fade-in">
-                <span class="project-icon">📊</span>
+                <span class="project-icon">🧪</span>
                 <h3>Python SQL Operator Library with Data Provenance</h3>
-                <p>ETL operator library with Ray distributed actors, LIME/SHAP explainability, and Jaeger metrics. 70% perf improvement.</p>
+                <p>ETL operators with Ray distributed actors, LIME/SHAP explainability, and Jaeger metrics. 70% perf improvement.</p>
                 <span class="project-link">Read more</span>
             </a>
 
@@ -612,7 +678,7 @@
                 <span class="project-icon">🔐</span>
                 <h3>Threshold Signatures in Blockchain</h3>
                 <p>Research on threshold signature schemes and their applications in distributed ledger systems.</p>
-                <span class="project-link">Read more</span>
+                <span class="project-link">Read paper</span>
             </a>
 
             <a href="https://github.com/mananmonga/Applied_Crypto_Spring_2020_Project_Signal" target="_blank" class="project-card fade-in">
@@ -627,20 +693,6 @@
                 <h3>SDN as Backbone for Large-Scale IoT</h3>
                 <p>Research paper on using Software-Defined Networking as infrastructure backbone for IoT.</p>
                 <span class="project-link">Read paper</span>
-            </a>
-
-            <a href="posts/baremetal.html" class="project-card fade-in">
-                <span class="project-icon">🛒</span>
-                <h3>Bare Metal Marketplace</h3>
-                <p>E-commerce marketplace project built from the ground up.</p>
-                <span class="project-link">Read more</span>
-            </a>
-
-            <a href="posts/aabootcamp.html" class="project-card fade-in">
-                <span class="project-icon">💻</span>
-                <h3>All Aboard Bootcamp</h3>
-                <p>16-day intensive with John Crepezzi of GitHub covering Ruby, Rails, and JavaScript.</p>
-                <span class="project-link">Read more</span>
             </a>
 
         </div>

@@ -1,131 +1,671 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manan Monga's Homepage</title>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@600&display=swap" rel="stylesheet">
+    <title>Manan Monga — Senior Software Engineer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        html, body {
-            height: 100%;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #ffffff;
+            --bg-alt: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --muted: #6e6e73;
+            --subtle: #86868b;
+            --border: #d2d2d7;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
         }
+
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: 'Source Sans Pro', sans-serif;
-            font-size: large;
-            width: 100%;
-            margin: 0px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .base {
+        a { text-decoration: none; color: inherit; }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            height: 48px;
             display: flex;
-            flex-direction: row;
-            height: 100%;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
         }
 
-        .nav-bar {
-            flex: 1;
-            /* margin: auto; */
-            background-color: #202020;
-            color: white;
+        .nav-logo {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: 400;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            height: 100%;
-        }
-        a:link {
-              text-decoration: none;
-              color: inherit;
-            }
-        a:visited {
-            text-decoration: none;
-            color: inherit  
-            }
-
-        a:hover {
-            text-decoration: underline;
-            }
-
-        a:active {
-            text-decoration: underline;
-            }
-
-        .content {
-            flex: 3;
-            margin: 10px;
-            /* padding: 10px; */
-            height: 100%;
+            padding: 80px 2rem 4rem;
+            background: linear-gradient(180deg, #f5f5f7 0%, #ffffff 100%);
         }
 
-        .hello {
-            max-width: 800px;
+        .hero-eyebrow {
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            color: var(--accent);
+            margin-bottom: 1.25rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.0;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            color: var(--muted);
+            max-width: 560px;
+            font-weight: 400;
+            line-height: 1.55;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.6rem 1.4rem;
+            border-radius: 980px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        .btn-outline {
+            background: rgba(0,0,0,0.06);
+            color: var(--text);
+        }
+
+        .btn-outline:hover { background: rgba(0,0,0,0.1); }
+
+        /* ── Section shell ── */
+        .section-wrap {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+        }
+
+        .section-alt { background: var(--bg-alt); }
+
+        .section-eyebrow {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.6rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+            line-height: 1.1;
+        }
+
+        .section-body {
+            font-size: 1.05rem;
+            color: var(--muted);
+            max-width: 640px;
+            margin-bottom: 3.5rem;
+            line-height: 1.65;
+        }
+
+        /* ── About ── */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 4rem;
+            align-items: start;
+        }
+
+        .avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+        }
+
+        .about-text p {
+            color: var(--muted);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            line-height: 1.7;
+        }
+
+        .about-text p:last-child { margin-bottom: 0; }
+
+        .about-text a { color: var(--accent); }
+        .about-text a:hover { text-decoration: underline; }
+
+        .hl { color: var(--text); font-weight: 600; }
+
+        /* ── Skills ── */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .skill-group h3 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--subtle);
+            margin-bottom: 0.9rem;
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            padding: 0.3rem 0.8rem;
+            border-radius: 980px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        /* ── Timeline ── */
+        .timeline { display: flex; flex-direction: column; gap: 1px; }
+
+        .timeline-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 2rem;
+            margin-bottom: 1rem;
+            transition: box-shadow 0.2s;
+        }
+
+        .timeline-item:hover {
+            box-shadow: 0 4px 30px rgba(0,0,0,0.08);
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .timeline-company {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text);
+        }
+
+        .timeline-location {
+            font-size: 0.82rem;
+            color: var(--subtle);
+        }
+
+        .timeline-role {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--accent);
+            margin-bottom: 0.15rem;
+        }
+
+        .timeline-date {
+            font-size: 0.78rem;
+            color: var(--subtle);
+            margin-bottom: 1rem;
+        }
+
+        .timeline-bullets {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .timeline-bullets li {
+            font-size: 0.875rem;
+            color: var(--muted);
+            padding-left: 1.1rem;
+            position: relative;
+            line-height: 1.55;
+        }
+
+        .timeline-bullets li::before {
+            content: '·';
+            position: absolute;
+            left: 0;
+            color: var(--subtle);
+            font-weight: 700;
+        }
+
+        /* ── Projects grid ── */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .project-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.75rem;
+            display: block;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+
+        .project-card:hover {
+            box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .project-icon {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .project-card h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            line-height: 1.35;
+        }
+
+        .project-card p {
+            font-size: 0.82rem;
+            color: var(--subtle);
+            line-height: 1.5;
+        }
+
+        .project-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            color: var(--accent);
+            margin-top: 0.75rem;
+            font-weight: 500;
+        }
+
+        .project-link::after { content: ' →'; }
+
+        /* ── Footer ── */
+        footer {
+            background: var(--bg-alt);
+            border-top: 1px solid var(--border);
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            font-size: 0.8rem;
+            color: var(--subtle);
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--text); }
+
+        footer p {
+            font-size: 0.78rem;
+            color: var(--subtle);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .about-grid { grid-template-columns: 1fr; }
+            .avatar { width: 120px; height: 120px; }
+            nav { padding: 0 1.25rem; }
+            .nav-links { gap: 1.25rem; }
+        }
+
+        /* ── Scroll fade-in ── */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
-
 <body>
 
-    <div class="base">
-        <div class="nav-bar">
-            <div class="image"><img src="assets/avatar.jpeg" alt="avatar" width="200px" ></div>
-            <div class="logo">Manan Monga</div>
-            <div class="subtext">Computer Science and Cybersecurity Graduate Student</div>
-            <div class="links">
-                <ul>
-                    <li>Home</li>
-                    <li><a href = "mailto: mananmonga@gmail.com" target="_blank">Email</li>
-                    <li> <a href = "https://github.com/mananmonga" target="_blank">    Github</li> </a>
-                    <li> <a href = "https://www.linkedin.com/in/manan-monga-844207147/" target="_blank"> LinkedIn</li></a>
-                    <li> <a href = "assets/Manan Monga's Resume.pdf" target="_blank"> Resume </a> </li>
-                    
-                    <li><a href = "posts/index.html">Posts</a>            </li>
-                </ul>
+<!-- Nav -->
+<nav>
+    <div class="nav-logo">Manan Monga</div>
+    <ul class="nav-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#skills">Skills</a></li>
+        <li><a href="#experience">Experience</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="assets/Manan_Monga_Resume.pdf" target="_blank">Resume</a></li>
+    </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <p class="hero-eyebrow">Senior Software Engineer</p>
+    <h1>Manan Monga</h1>
+    <p class="hero-subtitle">
+        Building real-time data pipelines and distributed security systems at scale.
+    </p>
+    <div class="hero-cta">
+        <a href="#experience" class="btn btn-primary">View Experience</a>
+        <a href="mailto:mananmonga@gmail.com" class="btn btn-outline">Email</a>
+        <a href="https://github.com/mananmonga" target="_blank" class="btn btn-outline">GitHub</a>
+        <a href="https://www.linkedin.com/in/manan-monga-844207147/" target="_blank" class="btn btn-outline">LinkedIn</a>
+    </div>
+</section>
+
+<!-- About -->
+<section id="about">
+    <div class="section-wrap">
+        <p class="section-eyebrow fade-in">About</p>
+        <h2 class="section-title fade-in">A bit about me.</h2>
+        <div class="about-grid fade-in">
+            <img src="assets/avatar.jpeg" alt="Manan Monga" class="avatar">
+            <div class="about-text">
+                <p>I'm a Senior Software Engineer at <span class="hl">SecurityScorecard</span>, where I architect real-time data streaming infrastructure using Apache Flink and Kafka — ingesting billions of daily security observations with stateful enrichment at scale.</p>
+                <p>Previously at Securonix, I built high-performance SIEM cloud applications on AWS and led cloud security engineering, including a Redis optimization that reduced cloud costs by <span class="hl">$2.3M per year</span> in collaboration with the AWS Elasticache team.</p>
+                <p>I hold an MS in Computer Science (Cybersecurity) from <a href="https://www.bu.edu" target="_blank">Boston University</a> and conducted research on privacy-sensitive contact tracing at BU's Hariri Institute for Computing.</p>
+                <p>Outside of work I play soccer, cook from Gordon Ramsay's YouTube videos, and will enthusiastically argue that Manchester City are the best team in the land and all the world.</p>
             </div>
-        </div>
-
-        <div class="content">
-            <p class="hello">
-                Hello! <br><br>
-
-                I am an MS student in Computer Science at Boston University specializing in Cybersecurity who loves solving problems centred around
-                privacy and security using software engineering and cryptography as my tools. <br>
-                My goal is to be part of teams that tackle issues with blockchain, finance, and personal data privacy. I want to be in an environment where my mentors are my 
-                teammates and my teammates are my mentors. <br><br>
-                I currently work as a Graduate Research Assistant at Boston Unversity's Hariri Institute for Computing. I work on designing and building an end-to-end, cross-platform framework for privacy
-                sensitive automated contact tracing. Our team is supervised by <a href="https://www.bu.edu/eng/profile/ari-trachtenberg/">Professor Ari Trachtenberg.</a> <br><br>
-                I love to feed my curiosity with projects such as those featured below and in my free time I like to play soccer, cook from Gordon Ramsay's YouTube videos, and tell people that Manchester City are the best team in the land and all the world. <br> 
-
-
-                
-            </p>
-
-            <div class="current-project">
-                <h2>Blog Posts and Projects</h2>
-                    <ul class = "roman">
-                        <li><a href = "posts/covid.html" >Building an Automated exposure notication system for COVID-19</a></li>
-                        <li>    <a href =   "posts/baremetal.html" >Bare Metal Marketplace </a></li>
-                        <li><a href =   "posts/zcash.html" >ZCash Service Status Library</a></li>
-                        <li><a href =   "posts/Threshold Signatures.pdf" >Threshold Signatures in Blockchain </a></li>
-                        <li><a href =   "posts/provenance_python.html" >Data Provenance: Profiling and Comparing Overheads to enhance Data Provenance on large datasets</a></li>                
-                        <li><a href="assets/paper.pdf">SDN as backbone for large scale IoT</a></li>
-                        <li><a href="https://github.com/mananmonga/Applied_Crypto_Spring_2020_Project_Signal" target="_blank">Algebraic Message Authentication Code Generator</a></li>
-                        <li><a href="https://github.com/mananmonga/CS591_GradingSystem"target="_blank">Grading system on Java</a></li>
-                        <li><a href="posts/aabootcamp.html"target="_blank"> All Aboard Bootcamp with John Crepezzi of GitHub</a></li>
-                        <li><a href="cryptopiazza.html"target="blank"> Building Crypto-Piazza, an informational social network for cryptography and cryptocurrencies</a></li>
-<br>    
-
-</li>
-<br>
-
-</ul>
-                        
-            </div>
-
-            
         </div>
     </div>
+</section>
+
+<!-- Skills -->
+<div class="section-alt" id="skills">
+    <div class="section-wrap">
+        <p class="section-eyebrow fade-in">Skills</p>
+        <h2 class="section-title fade-in">Technologies & Tools.</h2>
+        <div class="skills-grid fade-in">
+            <div class="skill-group">
+                <h3>Languages</h3>
+                <div class="skill-tags">
+                    <span class="tag">Java</span>
+                    <span class="tag">TypeScript</span>
+                    <span class="tag">JavaScript</span>
+                    <span class="tag">SQL</span>
+                    <span class="tag">Python</span>
+                    <span class="tag">Solidity</span>
+                </div>
+            </div>
+            <div class="skill-group">
+                <h3>Frameworks</h3>
+                <div class="skill-tags">
+                    <span class="tag">Apache Flink</span>
+                    <span class="tag">NestJS</span>
+                    <span class="tag">Spark</span>
+                    <span class="tag">Ray</span>
+                    <span class="tag">gRPC</span>
+                </div>
+            </div>
+            <div class="skill-group">
+                <h3>Data & Streaming</h3>
+                <div class="skill-tags">
+                    <span class="tag">Kafka</span>
+                    <span class="tag">ClickHouse</span>
+                    <span class="tag">HBase</span>
+                    <span class="tag">Redis</span>
+                    <span class="tag">Protobuf</span>
+                </div>
+            </div>
+            <div class="skill-group">
+                <h3>Cloud & Infra</h3>
+                <div class="skill-tags">
+                    <span class="tag">AWS</span>
+                    <span class="tag">Linux</span>
+                    <span class="tag">Git</span>
+                    <span class="tag">JUnit</span>
+                    <span class="tag">Mockito</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Experience -->
+<section id="experience">
+    <div class="section-wrap">
+        <p class="section-eyebrow fade-in">Experience</p>
+        <h2 class="section-title fade-in">Work History.</h2>
+
+        <div class="timeline">
+
+            <div class="timeline-item fade-in">
+                <div class="timeline-header">
+                    <span class="timeline-company">SecurityScorecard</span>
+                    <span class="timeline-location">Austin, TX</span>
+                </div>
+                <div class="timeline-role">Senior Software Engineer</div>
+                <div class="timeline-date">April 2025 – Present</div>
+                <ul class="timeline-bullets">
+                    <li>Architected real-time data streaming using Apache Flink, building pipelines that ingest billions of daily security observations from Kafka with stateful enrichment</li>
+                    <li>Engineered sub-second analytics by sinking enriched data into ClickHouse with complex stateful merge logic and side-output fan-outs</li>
+                    <li>Scaled a cross-platform Protobuf contract layer for 50+ definitions with schema governance via Buf and automated codegen across Java, TS, Scala, and Python</li>
+                    <li>Developed a NestJS gRPC microservice for observation querying and vendor risk scoring with dynamic ClickHouse aggregations</li>
+                </ul>
+            </div>
+
+            <div class="timeline-item fade-in">
+                <div class="timeline-header">
+                    <span class="timeline-company">Securonix</span>
+                    <span class="timeline-location">Addison, TX</span>
+                </div>
+                <div class="timeline-role">Software Engineer</div>
+                <div class="timeline-date">Oct 2022 – Apr 2025</div>
+                <ul class="timeline-bullets">
+                    <li>Built high-performance SIEM cloud applications on AWS</li>
+                    <li>Designed analytics including Beaconing, Rarity analysis, Behavior analytics, and Peer analytics using Spark Streaming, Kafka, HBase, and Redis</li>
+                    <li>Collaborated with the AWS Elasticache team to reduce cloud expenses by $2.3M/year through Redis read-replica optimization</li>
+                </ul>
+            </div>
+
+            <div class="timeline-item fade-in">
+                <div class="timeline-header">
+                    <span class="timeline-company">Securonix</span>
+                    <span class="timeline-location">Addison, TX</span>
+                </div>
+                <div class="timeline-role">Cloud Security Engineer</div>
+                <div class="timeline-date">Jun 2021 – Sep 2022</div>
+                <ul class="timeline-bullets">
+                    <li>Delivered architecture solutions aligned with client business needs, enhancing build and deployment quality</li>
+                    <li>Boosted team productivity through standardized procedures and internal documentation</li>
+                    <li>Represented cloud team in the Office of the CTO for feature design tailored to customer requirements</li>
+                </ul>
+            </div>
+
+            <div class="timeline-item fade-in">
+                <div class="timeline-header">
+                    <span class="timeline-company">Boston University — Hariri Institute for Computing</span>
+                    <span class="timeline-location">Boston, MA</span>
+                </div>
+                <div class="timeline-role">Graduate Research Assistant</div>
+                <div class="timeline-date">Apr 2020 – May 2021</div>
+                <ul class="timeline-bullets">
+                    <li>Led research team building a cross-platform React-Native app for privacy-sensitive COVID-19 contact tracing</li>
+                    <li>Implemented Bluetooth Low Energy chirps for mobile exposure detection within COVID transmission range</li>
+                    <li>Investigated exposure notification frameworks with MA state government</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Projects -->
+<div class="section-alt" id="projects">
+    <div class="section-wrap">
+        <p class="section-eyebrow fade-in">Projects & Writing</p>
+        <h2 class="section-title fade-in">Blog Posts & Projects.</h2>
+        <div class="projects-grid">
+
+            <a href="posts/covid.html" class="project-card fade-in">
+                <span class="project-icon">🔬</span>
+                <h3>Automated COVID-19 Exposure Notification System</h3>
+                <p>Cross-platform contact tracing using BLE for privacy-sensitive exposure detection.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/provenance_python.html" class="project-card fade-in">
+                <span class="project-icon">📊</span>
+                <h3>Python SQL Operator Library with Data Provenance</h3>
+                <p>ETL operator library with Ray distributed actors, LIME/SHAP explainability, and Jaeger metrics. 70% perf improvement.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/zcash.html" class="project-card fade-in">
+                <span class="project-icon">₿</span>
+                <h3>ZCash Service Status Library</h3>
+                <p>Grant-funded library for monitoring ZCash node service status and health.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/Threshold Signatures.pdf" class="project-card fade-in">
+                <span class="project-icon">🔐</span>
+                <h3>Threshold Signatures in Blockchain</h3>
+                <p>Research on threshold signature schemes and their applications in distributed ledger systems.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="https://github.com/mananmonga/Applied_Crypto_Spring_2020_Project_Signal" target="_blank" class="project-card fade-in">
+                <span class="project-icon">🔑</span>
+                <h3>Algebraic MAC Generator</h3>
+                <p>Implementation of algebraic message authentication code schemes using the Signal protocol.</p>
+                <span class="project-link">View on GitHub</span>
+            </a>
+
+            <a href="assets/paper.pdf" class="project-card fade-in">
+                <span class="project-icon">📡</span>
+                <h3>SDN as Backbone for Large-Scale IoT</h3>
+                <p>Research paper on using Software-Defined Networking as infrastructure backbone for IoT.</p>
+                <span class="project-link">Read paper</span>
+            </a>
+
+            <a href="posts/baremetal.html" class="project-card fade-in">
+                <span class="project-icon">🛒</span>
+                <h3>Bare Metal Marketplace</h3>
+                <p>E-commerce marketplace project built from the ground up.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+            <a href="posts/aabootcamp.html" class="project-card fade-in">
+                <span class="project-icon">💻</span>
+                <h3>All Aboard Bootcamp</h3>
+                <p>16-day intensive with John Crepezzi of GitHub covering Ruby, Rails, and JavaScript.</p>
+                <span class="project-link">Read more</span>
+            </a>
+
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer>
+    <div class="footer-links">
+        <a href="mailto:mananmonga@gmail.com">Email</a>
+        <a href="https://github.com/mananmonga" target="_blank">GitHub</a>
+        <a href="https://www.linkedin.com/in/manan-monga-844207147/" target="_blank">LinkedIn</a>
+        <a href="assets/Manan_Monga_Resume.pdf" target="_blank">Resume</a>
+    </div>
+    <p>Manan Monga · Austin, TX</p>
+</footer>
+
+<script>
+    // Scroll fade-in
+    const observer = new IntersectionObserver(
+        (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+        { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
 </body>
-
 </html>
-
-<br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br>
